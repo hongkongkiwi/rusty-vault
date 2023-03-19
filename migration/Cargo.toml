@@ -1,0 +1,28 @@
+[package]
+name = "migration"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "migration"
+path = "src/lib.rs"
+
+[dependencies]
+async-std = { version = "1.12.0", features = ["attributes", "tokio1"] }
+chrono = "0.4.24"
+entities = { path = "../entities" }
+sea-orm-migration = { version = "0.11.1", features = ["sqlx-postgres", "runtime-actix-rustls"] }
+
+#[dependencies.sea-query]
+#version = "0"
+#features = [
+#  "backend-postgres",
+#  "with-chrono",
+#  "with-json",
+#  "with-uuid",
+#  "postgres-array",
+#  "with-uuid",
+#  "with-ipnetwork",
+#  "with-mac_address"
+#]
