@@ -22,8 +22,9 @@ pub struct Model {
   pub group_id: Option<Uuid>,
   #[serde(skip_serializing)]
   #[sea_orm(unique,nullable)]
-  pub private_key: String,
-  pub public_key: String,
+  pub private_key: Option<String>,
+  pub public_key: Option<String>,
+  pub aws_kms_url: Option<String>,
   pub algo: KeyAlgos,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
