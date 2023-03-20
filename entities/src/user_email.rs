@@ -1,18 +1,18 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use serde::{Deserialize, Serialize};
 //use serde_email::Email;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use async_trait::async_trait;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "user_emails", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
-  // #[serde(skip_deserializing)]
+  #[serde(skip_deserializing)]
   pub id: Uuid,
   pub user_id: Uuid,
   pub email_address: String,
-  #[sea_orm(nullable)]
+  #[sea_orm(nullable, unique)]
   pub verification_code: Option<String>,
   #[sea_orm(nullable)]
   pub verification_code_expires_at: Option<ChronoDateTimeUtc>,
@@ -38,7 +38,7 @@ pub enum Relation {
 
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
-      Relation::User.def()
+    Relation::User.def()
   }
 }
 
@@ -48,6 +48,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -57,12 +59,15 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
-      self.updated_at = Set(chrono::Utc::now());
-    } else {
-      self.updated_at = Set(chrono::Utc::now());
+    if !insert {
+      self.updated_at = Set(Utc::now());
     }
+    // if insert {
+    //   self.created_at = Set(chrono::Utc::now());
+    //   self.updated_at = Set(chrono::Utc::now());
+    // } else {
+    //   self.updated_at = Set(chrono::Utc::now());
+    // }
     // When a email becomes verified, updated the verified_at date
     if self.is_verified.is_set() {
       if *self.is_verified.as_ref() {

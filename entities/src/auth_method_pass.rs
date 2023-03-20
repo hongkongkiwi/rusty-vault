@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
 use rand::{distributions::Alphanumeric, Rng};
+use bcrypt::{
+  hash_with_result as bcrypt_hash_with_result,
+  verify as bcrypt_verify,
+  Version as BcryptVersion,
+  BcryptError, HashParts
+};
 
 #[derive(Debug, Clone, Eq, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "password_hash_cipher")]
@@ -15,18 +21,19 @@ pub enum PassHashCipher {
 #[sea_orm(table_name = "auth_method_passes", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
-  // #[serde(skip_deserializing)]
+  #[serde(skip_deserializing)]
   pub id: Uuid,
   pub user_id: Uuid,
   #[serde(skip_serializing)]
   #[sea_orm(nullable)]
   pub pass_hash: Option<String>,
+  #[serde(skip_serializing)]
   pub pass_hash_cipher: PassHashCipher,
   pub pass_last_changed_at: ChronoDateTimeUtc,
   pub force_pass_change: bool,
-  #[sea_orm(nullable)]
+  #[sea_orm(nullable, unique)]
   pub pass_reset_code: Option<String>, // Shorter reset code for sending via SMS
-  #[sea_orm(nullable)]
+  #[sea_orm(nullable, unique)]
   pub pass_reset_str: Option<String>, // Longer reset string for including in links
   #[sea_orm(nullable)]
   pub pass_reset_code_expires_at: Option<ChronoDateTimeUtc>,
@@ -52,23 +59,31 @@ impl Related<super::user::Entity> for Entity {
   }
 }
 
-fn hash_pass(pass: &Option<String>, cipher: &PassHashCipher) -> Option<String> {
+pub fn hash_pass(pass: &Option<String>, cipher: &PassHashCipher) -> Option<String> {
   if pass.is_none() {
     return None
   }
   let pass_value: String = pass.as_ref().unwrap().to_string();
   match cipher {
     PassHashCipher::Bcrypt => {
-      let cost: u32 = 32;
-      let version: bcrypt::Version = bcrypt::Version::TwoB;
-      let hash_result: Result<bcrypt::HashParts,bcrypt::BcryptError> = bcrypt::hash_with_result(pass_value, cost);
-      Some(hash_result.unwrap().format_for_version(version))
+      let bcrypt_cost: u32 = 32;
+      let bcrypt_version: BcryptVersion = BcryptVersion::TwoB;
+      let hash_result: Result<HashParts,BcryptError> = bcrypt_hash_with_result(pass_value, bcrypt_cost);
+      Some(hash_result.unwrap().format_for_version(bcrypt_version))
     }
   }
 }
 
-fn check_pass(pass: String, cipher: &PassHashCipher) {
-
+pub fn verify_pass_hash(pass: Option<String>, hash: Option<&String>, cipher: &PassHashCipher) -> bool {
+  if pass.is_none() || hash.is_none() { 
+    false
+  } else {
+    match cipher {
+      PassHashCipher::Bcrypt => {
+        bcrypt_verify(pass.unwrap(), hash.unwrap()).unwrap()
+      }
+    }
+  }
 }
 
 pub fn gen_pass_reset_codes() -> (String, u32) {
@@ -86,6 +101,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      created_at: Set(chrono::Utc::now()),
+      updated_at: Set(chrono::Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -95,22 +112,17 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
+    if !insert {
       self.updated_at = Set(chrono::Utc::now());
-    } else {
       // If the pass_hash_cipher is changed but pass_hash isn't also set then clear password
       // An unusual situation but it will force the user to reset the password
       if self.pass_hash_cipher.is_set() && self.pass_hash.is_not_set() {
         self.pass_hash = Set(None);
-        self.pass_last_changed_at = Set(Utc::now());
       }
-      self.updated_at = Set(chrono::Utc::now());
     }
     // If the password is set then hash it*
     if self.pass_hash.is_set() {
       self.pass_hash = Set(hash_pass(self.pass_hash.as_ref(),self.pass_hash_cipher.as_ref()));
-      self.pass_last_changed_at = Set(Utc::now());
     }
     // Normally these will be set together but lets check both here
     if self.pass_reset_code.is_set() || self.pass_reset_str.is_set() {
@@ -118,6 +130,9 @@ impl ActiveModelBehavior for ActiveModel {
       if self.pass_reset_code.as_ref().is_some() || self.pass_reset_str.as_ref().is_some() {
         self.pass_reset_code_expires_at = Set(Some(Utc::now() + Duration::hours(24)));
       }
+    }
+    if self.pass_last_changed_at.is_set() {
+      self.pass_last_changed_at = Set(Utc::now());
     }
     Ok(self)
       //     Err(DbErr::Custom(format!(

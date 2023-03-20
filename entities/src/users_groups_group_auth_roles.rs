@@ -43,15 +43,21 @@ pub enum Relation {
 
 #[async_trait]
 impl ActiveModelBehavior for ActiveModel {
+  /// Create a new ActiveModel with default values. Also used by `Default::default()`.
+  fn new() -> Self {
+    Self {
+      created_at: Set(chrono::Utc::now()),
+      updated_at: Set(chrono::Utc::now()),
+      ..ActiveModelTrait::default()
+    }
+  }
+
   /// Will be triggered before insert / update
   async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
-      self.updated_at = Set(chrono::Utc::now());
-    } else {
+    if !insert {
       self.updated_at = Set(chrono::Utc::now());
     }
     Ok(self)

@@ -19,11 +19,11 @@ pub enum AuthRole {
   DeniedBlocked,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, DeriveEntityModel)]
+#[derive(Debug, Clone, Eq, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "group_auth_role", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
-  // #[serde(skip_deserializing)]
+  #[serde(skip_deserializing)]
   pub id: Uuid,
   pub name: String,
   #[sea_orm(nullable)]
@@ -63,6 +63,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      created_at: Set(chrono::Utc::now()),
+      updated_at: Set(chrono::Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -72,10 +74,7 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
-      self.updated_at = Set(chrono::Utc::now());
-    } else {
+    if !insert {
       self.updated_at = Set(chrono::Utc::now());
     }
     Ok(self)

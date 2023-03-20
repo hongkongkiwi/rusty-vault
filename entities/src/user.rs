@@ -1,4 +1,4 @@
-use sea_orm::{ entity::prelude::*, ActiveValue::Set };
+use sea_orm::{entity::prelude::*, ActiveValue::Set, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
@@ -18,7 +18,7 @@ pub enum LockedState {
 #[sea_orm(table_name = "users", schema_name = "public")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    // #[serde(skip_deserializing)]
+    #[serde(skip_deserializing)]
     pub id: Uuid,
     //pub auth_pass_id: Uuid,
     pub invalid_login_attempts: u16,
@@ -77,12 +77,25 @@ impl Related<super::group_auth_role::Entity> for Entity {
   }
 }
 
+// #[async_trait]
+// pub async fn get_user_by_username(
+//   _db: &DatabaseConnection,
+//   username: &String,
+// ) -> Result<Vec<Model>, DbErr> {
+//   let mut find = Entity::find();
+//   find = find
+//     .filter(Column::Label.eq(label.clone()));
+//   find.one(_db).await
+// }
+
 #[async_trait]
 impl ActiveModelBehavior for ActiveModel {
   /// Create a new ActiveModel with default values. Also used by `Default::default()`.
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      created_at: Set(chrono::Utc::now()),
+      updated_at: Set(chrono::Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -92,10 +105,8 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
+    if !insert {
       self.updated_at = Set(chrono::Utc::now());
-    } else {
       let locked_state = *self.locked_state.as_ref();
       // If invalid_login_attempts is changed and we are not permanently locked
       if self.invalid_login_attempts.is_set() && locked_state != LockedState::PermanentlyLocked {
@@ -117,7 +128,6 @@ impl ActiveModelBehavior for ActiveModel {
           self.locked_state_updated_at = Set(Utc::now());
         }
       }
-      self.updated_at = Set(chrono::Utc::now());
     }
     Ok(self)
   }

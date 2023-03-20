@@ -7,11 +7,15 @@ use names::{Generator, Name};
 #[sea_orm(table_name = "user_profiles", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
-  // #[serde(skip_deserializing)]
+  #[serde(skip_deserializing)]
   pub id: Uuid,
   pub user_id: Uuid,
+  #[sea_orm(unique)]
   pub username: Option<String>,
+  #[sea_orm(nullable)]
+  pub profile_image_file_id: Option<Uuid>,
   pub name: String,
+  // #[sea_orm(column_type = "Json")]
   pub contact_details: Json,
   #[sea_orm(nullable)]
   pub notes: Option<String>,
@@ -43,6 +47,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      created_at: Set(chrono::Utc::now()),
+      updated_at: Set(chrono::Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -52,10 +58,7 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
-    if insert {
-      self.created_at = Set(chrono::Utc::now());
-      self.updated_at = Set(chrono::Utc::now());
-    } else {
+    if !insert {
       self.updated_at = Set(chrono::Utc::now());
     }
     // If no username is set, generate something random

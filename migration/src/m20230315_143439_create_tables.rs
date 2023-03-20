@@ -4,16 +4,8 @@ use sea_orm_migration::{
   // sea_orm::{ConnectionTrait, DbBackend, Statement},
   // sea_query::extension::postgres::Type,
 };
-use entities::{
-  user,
-  auth_method_pass,
-  user_email,
-  user_phone,
-  user_profile,
-  group,
-  group_auth_role,
-  users_groups_group_auth_roles
-};
+
+use entities::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
