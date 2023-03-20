@@ -18,6 +18,8 @@ pub struct Model {
   #[sea_orm(nullable)]
   pub link_hash_expires_at: Option<ChronoDateTimeUtc>,
   pub link_used_at: Option<ChronoDateTimeUtc>,
+  pub user_email_id: Option<Uuid>,
+  pub user_phone_id: Option<Uuid>,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }

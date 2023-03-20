@@ -41,10 +41,10 @@ pub enum Relation {
   AuthMethodPass,
   #[sea_orm(has_one = "super::auth_method_magiclink::Entity")]
   AuthMethodMagicLink,
-  #[sea_orm(has_many = "super::user_email::Entity")]
-  UserEmail,
-  #[sea_orm(has_many = "super::user_phone::Entity")]
-  UserPhone,
+  #[sea_orm(has_many = "super::email::Entity")]
+  Email,
+  #[sea_orm(has_many = "super::phone::Entity")]
+  Phone,
   #[sea_orm(has_many = "super::auth_api_key::Entity")]
   AuthApiKey,
   #[sea_orm(has_many = "super::pki_key::Entity")]
@@ -63,15 +63,15 @@ impl Related<super::auth_method_pass::Entity> for Entity {
   }
 }
 
-impl Related<super::user_email::Entity> for Entity {
+impl Related<super::email::Entity> for Entity {
   fn to() -> RelationDef {
-    Relation::UserEmail.def()
+    Relation::Email.def()
   }
 }
 
-impl Related<super::user_phone::Entity> for Entity {
+impl Related<super::phone::Entity> for Entity {
   fn to() -> RelationDef {
-    Relation::UserPhone.def()
+    Relation::Phone.def()
   }
 }
 

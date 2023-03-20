@@ -1,6 +1,6 @@
 pub mod user;
-pub mod user_email;
-pub mod user_phone;
+pub mod email;
+pub mod phone;
 pub mod user_profile;
 pub mod auth_method_pass;
 pub mod auth_method_magiclink;

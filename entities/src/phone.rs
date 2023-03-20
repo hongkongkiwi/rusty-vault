@@ -9,7 +9,9 @@ pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
-  pub user_id: Uuid,
+  pub user_id: Option<Uuid>,
+  pub organisation_profile_id: Option<Uuid>,
+  pub needs_verification: bool,
   pub phone_country: u32,
   pub phone_number: u32,
   pub is_primary: bool,
@@ -34,11 +36,25 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
+  #[sea_orm(
+    belongs_to = "super::organisation_profile::Entity",
+    from = "Column::OrganisationProfileId",
+    to = "super::organisation_profile::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  OrganisationProfile,
 }
 
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
       Relation::User.def()
+  }
+}
+
+impl Related<super::organisation_profile::Entity> for Entity {
+  fn to() -> RelationDef {
+      Relation::OrganisationProfile.def()
   }
 }
 

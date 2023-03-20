@@ -34,11 +34,19 @@ pub enum Relation {
   Organisation,
   #[sea_orm(has_many = "super::file::Entity")]
   File,
+  #[sea_orm(has_many = "super::phone::Entity")]
+  Phone,
 }
 
 impl Related<super::organisation::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::Organisation.def()
+  }
+}
+
+impl Related<super::phone::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::Phone.def()
   }
 }
 
