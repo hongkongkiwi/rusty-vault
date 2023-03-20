@@ -12,14 +12,14 @@ pub struct Model {
   pub id: Uuid,
   #[sea_orm(unique)]
   pub user_id: Uuid,
+  pub email_id: Option<Uuid>,
+  pub phone_id: Option<Uuid>,
   #[serde(skip_serializing)]
   #[sea_orm(unique,nullable)]
   pub link_hash: Option<String>,
   #[sea_orm(nullable)]
   pub link_hash_expires_at: Option<ChronoDateTimeUtc>,
   pub link_used_at: Option<ChronoDateTimeUtc>,
-  pub user_email_id: Option<Uuid>,
-  pub user_phone_id: Option<Uuid>,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
@@ -34,11 +34,39 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
+  #[sea_orm(
+    belongs_to = "super::phone::Entity",
+    from = "Column::PhoneId",
+    to = "super::phone::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  Phone,
+  #[sea_orm(
+    belongs_to = "super::email::Entity",
+    from = "Column::EmailId",
+    to = "super::email::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  Email,
 }
 
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::User.def()
+  }
+}
+
+impl Related<super::email::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::Email.def()
+  }
+}
+
+impl Related<super::phone::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::Phone.def()
   }
 }
 

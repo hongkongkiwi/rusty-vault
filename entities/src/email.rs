@@ -34,6 +34,8 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
+  #[sea_orm(has_one = "super::auth_method_magiclink::Entity")]
+  AuthMethodMagicLink,
 }
 
 impl Related<super::user::Entity> for Entity {
