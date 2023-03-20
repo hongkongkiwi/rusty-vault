@@ -21,8 +21,8 @@ pub enum Relation {
   OrganisationProfile,
   #[sea_orm(has_many = "super::group::Entity")]
   Group,
-  #[sea_orm(has_many = "super::api_key::Entity")]
-  ApiKey,
+  #[sea_orm(has_many = "super::auth_api_key::Entity")]
+  AuthApiKey,
   #[sea_orm(has_many = "super::pki_key::Entity")]
   PkiKey,
 }
@@ -39,9 +39,9 @@ impl Related<super::group::Entity> for Entity {
   }
 }
 
-impl Related<super::api_key::Entity> for Entity {
+impl Related<super::auth_api_key::Entity> for Entity {
   fn to() -> RelationDef {
-    Relation::ApiKey.def()
+    Relation::AuthApiKey.def()
   }
 }
 

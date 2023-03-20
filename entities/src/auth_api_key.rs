@@ -1,4 +1,4 @@
-use sea_orm::{ entity::prelude::*, ActiveValue::Set };
+use sea_orm::{ entity::prelude::*, ActiveValue::Set, DbErr };
 use serde::{Deserialize, Serialize};
 use chrono::Utc;
 use async_trait::async_trait;
@@ -15,6 +15,7 @@ pub struct Model {
   pub api_access_key: String,
   pub api_secret_key: String,
   pub key_issued_at: ChronoDateTimeUtc,
+  pub expires_on: Option<ChronoDateTimeUtc>,
   pub ip_address_last_used: Option<String>, 
   pub key_last_used_at: Option<ChronoDateTimeUtc>,
   pub created_at: ChronoDateTimeUtc,
@@ -89,6 +90,12 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
+    if self.user_id.as_ref().is_none() && self.organisation_id.as_ref().is_none() {
+      return Err(DbErr::Custom(format!(
+        "[before_save] Both user_id and organisation_id cannot be blank, insert: {}",
+        insert
+      )));
+    }
     if !insert {
       self.updated_at = Set(Utc::now());
       if self.ip_address_last_used.is_set() {

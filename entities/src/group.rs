@@ -32,6 +32,8 @@ pub enum Relation {
   Organisation,
   #[sea_orm(has_many = "super::file::Entity")]
   File,
+  #[sea_orm(has_many = "super::pki_key::Entity")]
+  PkiKey,
 }
 
 impl Related<super::organisation::Entity> for Entity {
@@ -43,6 +45,12 @@ impl Related<super::organisation::Entity> for Entity {
 impl Related<super::file::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::File.def()
+  }
+}
+
+impl Related<super::pki_key::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::PkiKey.def()
   }
 }
 

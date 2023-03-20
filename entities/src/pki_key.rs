@@ -19,6 +19,7 @@ pub struct Model {
   pub id: Uuid,
   pub user_id: Option<Uuid>,
   pub organisation_id: Option<Uuid>,
+  pub group_id: Option<Uuid>,
   #[serde(skip_serializing)]
   #[sea_orm(unique,nullable)]
   pub private_key: String,
@@ -46,6 +47,14 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
+  #[sea_orm(
+    belongs_to = "super::user::Entity",
+    from = "Column::GroupId",
+    to = "super::user::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  Group,
 }
 
 impl Related<super::organisation::Entity> for Entity {
@@ -57,6 +66,12 @@ impl Related<super::organisation::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::User.def()
+  }
+}
+
+impl Related<super::group::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::Group.def()
   }
 }
 
@@ -77,6 +92,14 @@ impl ActiveModelBehavior for ActiveModel {
   where
     C: ConnectionTrait,
   {
+    if self.user_id.as_ref().is_none() 
+      && self.organisation_id.as_ref().is_none() 
+      && self.group_id.as_ref().is_none() {
+      return Err(DbErr::Custom(format!(
+        "[before_save] All of user_id, organisation_id and group_id cannot be blank, insert: {}",
+        insert
+      )));
+    }
     if !insert {
       self.updated_at = Set(Utc::now());
     }

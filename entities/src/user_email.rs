@@ -62,12 +62,6 @@ impl ActiveModelBehavior for ActiveModel {
     if !insert {
       self.updated_at = Set(Utc::now());
     }
-    // if insert {
-    //   self.created_at = Set(chrono::Utc::now());
-    //   self.updated_at = Set(chrono::Utc::now());
-    // } else {
-    //   self.updated_at = Set(chrono::Utc::now());
-    // }
     // When a email becomes verified, updated the verified_at date
     if self.is_verified.is_set() {
       if *self.is_verified.as_ref() {
