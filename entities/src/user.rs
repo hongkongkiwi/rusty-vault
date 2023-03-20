@@ -38,6 +38,8 @@ pub enum Relation {
   UserProfile,
   #[sea_orm(has_one = "super::auth_method_pass::Entity")]
   AuthMethodPass,
+  #[sea_orm(has_one = "super::auth_method_magiclink::Entity")]
+  AuthMethodMagicLink,
   #[sea_orm(has_many = "super::user_email::Entity")]
   UserEmail,
   #[sea_orm(has_many = "super::user_phone::Entity")]

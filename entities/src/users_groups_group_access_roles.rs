@@ -1,5 +1,6 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use async_trait::async_trait;
+use chrono::Utc;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "users_groups_group_access_roles", schema_name = "public")]
@@ -46,8 +47,8 @@ impl ActiveModelBehavior for ActiveModel {
   /// Create a new ActiveModel with default values. Also used by `Default::default()`.
   fn new() -> Self {
     Self {
-      created_at: Set(chrono::Utc::now()),
-      updated_at: Set(chrono::Utc::now()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -58,7 +59,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
     }
     Ok(self)
   }

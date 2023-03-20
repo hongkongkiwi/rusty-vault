@@ -3,6 +3,7 @@ pub mod user_email;
 pub mod user_phone;
 pub mod user_profile;
 pub mod auth_method_pass;
+pub mod auth_method_magiclink;
 pub mod group;
 pub mod group_access_role;
 pub mod organisation;

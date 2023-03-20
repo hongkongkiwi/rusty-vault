@@ -101,8 +101,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
-      created_at: Set(chrono::Utc::now()),
-      updated_at: Set(chrono::Utc::now()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -113,7 +113,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
       // If the pass_hash_cipher is changed but pass_hash isn't also set then clear password
       // An unusual situation but it will force the user to reset the password
       if self.pass_hash_cipher.is_set() && self.pass_hash.is_not_set() {
