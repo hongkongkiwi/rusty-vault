@@ -14,6 +14,9 @@ pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
+  pub organisation_profile_id: Option<Uuid>,
+  pub user_profile_id: Option<Uuid>,
+  pub group_id: Option<Uuid>,
   // #[sea_orm(column_type = "Text")]
   // #[serde(with = "url_serde")]
   pub s3_file_url: String,
@@ -23,11 +26,29 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-  #[sea_orm(has_many = "super::user_profile::Entity")]
+  #[sea_orm(
+    belongs_to = "super::user_profile::Entity",
+    from = "Column::UserProfileId",
+    to = "super::user_profile::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
   UserProfile,
-  #[sea_orm(has_many = "super::organisation_profile::Entity")]
+  #[sea_orm(
+    belongs_to = "super::organisation_profile::Entity",
+    from = "Column::UserProfileId",
+    to = "super::organisation_profile::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
   OrganisationProfile,
-  #[sea_orm(has_many = "super::group::Entity")]
+  #[sea_orm(
+    belongs_to = "super::group::Entity",
+    from = "Column::GroupId",
+    to = "super::group::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
   Group,
 }
 

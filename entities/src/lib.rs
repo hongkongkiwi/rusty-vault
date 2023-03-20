@@ -12,3 +12,5 @@ pub mod organisation_profile;
 pub mod users_organisations_organisations_access_roles;
 pub mod users_groups_group_access_roles;
 pub mod file;
+pub mod api_key;
+pub mod pki_key;

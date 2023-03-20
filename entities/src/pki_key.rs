@@ -1,21 +1,29 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use chrono::Utc;
+// use rand::{distributions::Alphanumeric, Rng};
+
+#[derive(Debug, Clone, Eq, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "pki_key_algos")]
+pub enum KeyAlgos {
+  #[sea_orm(string_value = "RSA")]
+  RSA,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
-#[sea_orm(table_name = "groups", schema_name = "public")]
+#[sea_orm(table_name = "pki_key", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
-  pub name: String,
-  pub organisation_id: Uuid,
-  #[sea_orm(nullable)]
-  pub group_image_file_id: Option<Uuid>,
-  #[sea_orm(nullable)]
-  pub description: Option<String>,
-  pub icon: Option<String>,
-  pub color_rgb: Option<String>,
+  pub user_id: Option<Uuid>,
+  pub organisation_id: Option<Uuid>,
+  #[serde(skip_serializing)]
+  #[sea_orm(unique,nullable)]
+  pub private_key: String,
+  pub public_key: String,
+  pub algo: KeyAlgos,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
@@ -30,8 +38,14 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   Organisation,
-  #[sea_orm(has_many = "super::file::Entity")]
-  File,
+  #[sea_orm(
+    belongs_to = "super::user::Entity",
+    from = "Column::UserId",
+    to = "super::user::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  User,
 }
 
 impl Related<super::organisation::Entity> for Entity {
@@ -40,29 +54,9 @@ impl Related<super::organisation::Entity> for Entity {
   }
 }
 
-impl Related<super::file::Entity> for Entity {
-  fn to() -> RelationDef {
-    Relation::File.def()
-  }
-}
-
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
-    super::users_groups_group_access_roles::Relation::User.def()
-  }
-
-  fn via() -> Option<RelationDef> {
-    Some(super::users_groups_group_access_roles::Relation::Group.def().rev())
-  }
-}
-
-impl Related<super::group_access_role::Entity> for Entity {
-  fn to() -> RelationDef {
-    super::users_groups_group_access_roles::Relation::GroupAccessRole.def()
-  }
-
-  fn via() -> Option<RelationDef> {
-    Some(super::users_groups_group_access_roles::Relation::Group.def().rev())
+    Relation::User.def()
   }
 }
 
@@ -72,8 +66,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
-      created_at: Set(chrono::Utc::now()),
-      updated_at: Set(chrono::Utc::now()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -84,7 +78,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
     }
     Ok(self)
   }

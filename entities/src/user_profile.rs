@@ -9,6 +9,7 @@ pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
+  #[sea_orm(unique)]
   pub user_id: Uuid,
   #[sea_orm(unique)]
   pub username: Option<String>,
@@ -33,13 +34,7 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
-  #[sea_orm(
-    belongs_to = "super::file::Entity",
-    from = "Column::ProfileImageFileId",
-    to = "super::file::Column::Id",
-    on_update = "Cascade",
-    on_delete = "Cascade"
-  )]
+  #[sea_orm(has_many = "super::file::Entity")]
   File,
 }
 

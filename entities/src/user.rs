@@ -28,6 +28,7 @@ pub struct Model {
   pub locked_state_expires_at: Option<ChronoDateTimeUtc>,
   #[sea_orm(nullable)]
   pub last_login_at: Option<ChronoDateTimeUtc>,
+  pub pki_key_id: Uuid,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
@@ -44,6 +45,10 @@ pub enum Relation {
   UserEmail,
   #[sea_orm(has_many = "super::user_phone::Entity")]
   UserPhone,
+  #[sea_orm(has_many = "super::api_key::Entity")]
+  ApiKey,
+  #[sea_orm(has_many = "super::pki_key::Entity")]
+  PkiKey,
 }
 
 impl Related<super::user_profile::Entity> for Entity {
@@ -67,6 +72,18 @@ impl Related<super::user_email::Entity> for Entity {
 impl Related<super::user_phone::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::UserPhone.def()
+  }
+}
+
+impl Related<super::api_key::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::ApiKey.def()
+  }
+}
+
+impl Related<super::pki_key::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::PkiKey.def()
   }
 }
 
@@ -105,6 +122,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
+      last_login_at: Set(None),
+      invalid_login_attempts: Set(0),
       created_at: Set(Utc::now()),
       updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
