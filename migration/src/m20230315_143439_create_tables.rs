@@ -228,27 +228,27 @@ impl MigrationTrait for Migration {
     // Group Auth Role
     manager
       .create_table(Table::create()
-      .table(group_auth_role::Entity)
+      .table(group_access_role::Entity)
       .if_not_exists()
       .col(
-        ColumnDef::new(group_auth_role::Column::Id)
+        ColumnDef::new(group_access_role::Column::Id)
         .uuid().not_null().primary_key())
       .col(
-        ColumnDef::new(group_auth_role::Column::Name)
+        ColumnDef::new(group_access_role::Column::Name)
         .string().not_null())
       .col(
-        ColumnDef::new(group_auth_role::Column::Description)
+        ColumnDef::new(group_access_role::Column::Description)
         .string().null())
       .col(
-        ColumnDef::new(group_auth_role::Column::AuthRole)
-        .enumeration(group_auth_role::AuthRoleEnum, group_auth_role::AuthRole::iden_values())
+        ColumnDef::new(group_access_role::Column::AuthRole)
+        .enumeration(group_access_role::AuthRoleEnum, group_access_role::AuthRole::iden_values())
         .not_null())
       .col(
-        ColumnDef::new(group_auth_role::Column::CreatedAt)
+        ColumnDef::new(group_access_role::Column::CreatedAt)
         .timestamp_with_time_zone().not_null()
         .extra("DEFAULT CURRENT_TIMESTAMP".into()))
       .col(
-        ColumnDef::new(group_auth_role::Column::UpdatedAt)
+        ColumnDef::new(group_access_role::Column::UpdatedAt)
         .timestamp_with_time_zone().not_null()
         .extra("DEFAULT CURRENT_TIMESTAMP".into()))
       .to_owned())
@@ -257,22 +257,22 @@ impl MigrationTrait for Migration {
     // Users - Groups - Group Auth Roles
     manager
       .create_table(Table::create()
-      .table(users_groups_group_auth_roles::Entity)
+      .table(users_groups_group_access_roles::Entity)
       .if_not_exists()
       .col(
-        ColumnDef::new(users_groups_group_auth_roles::Column::UserId)
+        ColumnDef::new(users_groups_group_access_roles::Column::UserId)
         .uuid().not_null().primary_key())
       .col(
-        ColumnDef::new(users_groups_group_auth_roles::Column::GroupId)
+        ColumnDef::new(users_groups_group_access_roles::Column::GroupId)
         .uuid().not_null().primary_key())
       .col(
-        ColumnDef::new(users_groups_group_auth_roles::Column::GroupAuthRoleId)
+        ColumnDef::new(users_groups_group_access_roles::Column::GroupAuthRoleId)
         .uuid().not_null())
       .col(
-        ColumnDef::new(users_groups_group_auth_roles::Column::CreatedAt)
+        ColumnDef::new(users_groups_group_access_roles::Column::CreatedAt)
         .timestamp_with_time_zone().not_null()
       .extra("DEFAULT CURRENT_TIMESTAMP".into()))
-      .col(ColumnDef::new(users_groups_group_auth_roles::Column::UpdatedAt).timestamp_with_time_zone().not_null()
+      .col(ColumnDef::new(users_groups_group_access_roles::Column::UpdatedAt).timestamp_with_time_zone().not_null()
       .extra("DEFAULT CURRENT_TIMESTAMP".into()))
       .to_owned())
       .await?;
@@ -308,10 +308,10 @@ impl MigrationTrait for Migration {
       .drop_table(Table::drop().table(group::Entity).to_owned())
       .await?;
     manager
-      .drop_table(Table::drop().table(group_auth_role::Entity).to_owned())
+      .drop_table(Table::drop().table(group_access_role::Entity).to_owned())
       .await?;
     manager
-      .drop_table(Table::drop().table(users_groups_group_auth_roles::Entity).to_owned())
+      .drop_table(Table::drop().table(users_groups_group_access_roles::Entity).to_owned())
       .await?;
     Ok(())
   }

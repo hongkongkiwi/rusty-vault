@@ -33,6 +33,20 @@ pub enum Relation {
     on_delete = "Cascade"
   )]
   User,
+  #[sea_orm(
+    belongs_to = "super::file::Entity",
+    from = "Column::ProfileImageFileId",
+    to = "super::file::Column::Id",
+    on_update = "Cascade",
+    on_delete = "Cascade"
+  )]
+  File,
+}
+
+impl Related<super::file::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::File.def()
+  }
 }
 
 impl Related<super::user::Entity> for Entity {

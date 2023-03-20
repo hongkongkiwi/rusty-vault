@@ -1,21 +1,22 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use chrono::Utc;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
-#[sea_orm(table_name = "groups", schema_name = "public")]
+#[sea_orm(table_name = "organisation_profiles", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
-  pub name: String,
   pub organisation_id: Uuid,
   #[sea_orm(nullable)]
-  pub group_image_file_id: Option<Uuid>,
+  pub organisation_image_file_id: Option<Uuid>,
+  // #[sea_orm(column_type = "Json")]
+  pub name: String,
+  pub contact_details: Json,
   #[sea_orm(nullable)]
-  pub description: Option<String>,
-  pub icon: Option<String>,
-  pub color_rgb: Option<String>,
+  pub notes: Option<String>,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
@@ -26,11 +27,13 @@ pub enum Relation {
     belongs_to = "super::organisation::Entity",
     from = "Column::OrganisationId",
     to = "super::organisation::Column::Id"
+    on_update = "Cascade",
+    on_delete = "Cascade"
   )]
   Organisation,
   #[sea_orm(
     belongs_to = "super::file::Entity",
-    from = "Column::GroupImageFileId",
+    from = "Column::OrganisationImageFileId",
     to = "super::file::Column::Id",
     on_update = "Cascade",
     on_delete = "Cascade"
@@ -50,34 +53,14 @@ impl Related<super::file::Entity> for Entity {
   }
 }
 
-impl Related<super::user::Entity> for Entity {
-  fn to() -> RelationDef {
-    super::users_groups_group_access_roles::Relation::User.def()
-  }
-
-  fn via() -> Option<RelationDef> {
-    Some(super::users_groups_group_access_roles::Relation::Group.def().rev())
-  }
-}
-
-impl Related<super::group_access_role::Entity> for Entity {
-  fn to() -> RelationDef {
-    super::users_groups_group_access_roles::Relation::GroupAccessRole.def()
-  }
-
-  fn via() -> Option<RelationDef> {
-    Some(super::users_groups_group_access_roles::Relation::Group.def().rev())
-  }
-}
-
 #[async_trait]
 impl ActiveModelBehavior for ActiveModel {
   /// Create a new ActiveModel with default values. Also used by `Default::default()`.
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
-      created_at: Set(chrono::Utc::now()),
-      updated_at: Set(chrono::Utc::now()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }

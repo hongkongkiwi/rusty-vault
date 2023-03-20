@@ -1,7 +1,8 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use serde::{Deserialize, Serialize};
+// use url::Url;
 use async_trait::async_trait;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 
 // use s3::bucket::Bucket;
 // use s3::creds::Credentials;
@@ -13,29 +14,20 @@ pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
   pub id: Uuid,
-  #[serde(with = "url_serde")]
-  pub s3_file_url: Url,
+  // #[sea_orm(column_type = "Text")]
+  // #[serde(with = "url_serde")]
+  pub s3_file_url: String,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-  #[sea_orm(
-    belongs_to = "super::user_profile::Entity",
-    from = "Column::ProfileImageFileId",
-    to = "super::user_profile::Column::Id",
-    on_update = "Cascade",
-    on_delete = "Cascade"
-  )]
+  #[sea_orm(has_many = "super::user_profile::Entity")]
   UserProfile,
-  #[sea_orm(
-    belongs_to = "super::group::Entity",
-    from = "Column::GroupImageFileId",
-    to = "super::group::Column::Id",
-    on_update = "Cascade",
-    on_delete = "Cascade"
-  )]
+  #[sea_orm(has_many = "super::organisation_profile::Entity")]
+  OrganisationProfile,
+  #[sea_orm(has_many = "super::group::Entity")]
   Group,
 }
 
@@ -51,7 +43,10 @@ impl Related<super::group::Entity> for Entity {
   }
 }
 
-impl EntityAddons for ActiveModel {
+impl Related<super::organisation_profile::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::OrganisationProfile.def()
+  }
 }
 
 #[async_trait]
@@ -72,7 +67,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
     }
     Ok(self)
   }

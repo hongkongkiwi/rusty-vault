@@ -1,10 +1,11 @@
 use sea_orm::{ entity::prelude::*, ActiveValue::Set };
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use chrono::Utc;
 
 #[derive(Debug, Clone, Eq, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "auth_role")]
-pub enum AuthRole {
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "org_role_permissions")]
+pub enum OrgRolePermissions {
   #[sea_orm(string_value = "AllowOwner")]
   AllowOwner,
   #[sea_orm(string_value = "AllowAdmin")]
@@ -20,7 +21,7 @@ pub enum AuthRole {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "group_auth_role", schema_name = "public")]
+#[sea_orm(table_name = "organisation_access_roles", schema_name = "public")]
 pub struct Model {
   #[sea_orm(primary_key, auto_increment = false)]
   #[serde(skip_deserializing)]
@@ -28,7 +29,7 @@ pub struct Model {
   pub name: String,
   #[sea_orm(nullable)]
   pub description: Option<String>,
-  pub auth_role: AuthRole,
+  pub org_role_permissions: OrgRolePermissions,
   pub created_at: ChronoDateTimeUtc,
   pub updated_at: ChronoDateTimeUtc,
 }
@@ -39,21 +40,19 @@ pub enum Relation {
 
 impl Related<super::user::Entity> for Entity {
   fn to() -> RelationDef {
-      super::users_groups_group_auth_roles::Relation::User.def()
+    super::users_organisations_organisations_access_roles::Relation::User.def()
   }
-
   fn via() -> Option<RelationDef> {
-      Some(super::users_groups_group_auth_roles::Relation::GroupAuthRole.def().rev())
+    Some(super::users_organisations_organisations_access_roles::Relation::OrganisationAccessRole.def().rev())
   }
 }
 
-impl Related<super::group::Entity> for Entity {
+impl Related<super::organisation::Entity> for Entity {
   fn to() -> RelationDef {
-      super::users_groups_group_auth_roles::Relation::Group.def()
+    super::users_organisations_organisations_access_roles::Relation::Organisation.def()
   }
-
   fn via() -> Option<RelationDef> {
-      Some(super::users_groups_group_auth_roles::Relation::GroupAuthRole.def().rev())
+    Some(super::users_organisations_organisations_access_roles::Relation::OrganisationAccessRole.def().rev())
   }
 }
 
@@ -75,7 +74,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
     }
     Ok(self)
   }

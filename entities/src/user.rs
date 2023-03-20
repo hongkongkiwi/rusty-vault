@@ -17,19 +17,19 @@ pub enum LockedState {
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "users", schema_name = "public")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    #[serde(skip_deserializing)]
-    pub id: Uuid,
-    //pub auth_pass_id: Uuid,
-    pub invalid_login_attempts: u16,
-    pub locked_state: LockedState,
-    pub locked_state_updated_at: ChronoDateTimeUtc,
-    #[sea_orm(nullable)]
-    pub locked_state_expires_at: Option<ChronoDateTimeUtc>,
-    #[sea_orm(nullable)]
-    pub last_login_at: Option<ChronoDateTimeUtc>,
-    pub created_at: ChronoDateTimeUtc,
-    pub updated_at: ChronoDateTimeUtc,
+  #[sea_orm(primary_key, auto_increment = false)]
+  #[serde(skip_deserializing)]
+  pub id: Uuid,
+  //pub auth_pass_id: Uuid,
+  pub invalid_login_attempts: u16,
+  pub locked_state: LockedState,
+  pub locked_state_updated_at: ChronoDateTimeUtc,
+  #[sea_orm(nullable)]
+  pub locked_state_expires_at: Option<ChronoDateTimeUtc>,
+  #[sea_orm(nullable)]
+  pub last_login_at: Option<ChronoDateTimeUtc>,
+  pub created_at: ChronoDateTimeUtc,
+  pub updated_at: ChronoDateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -37,14 +37,25 @@ pub enum Relation {
   #[sea_orm(has_one = "super::user_profile::Entity")]
   UserProfile,
   #[sea_orm(has_one = "super::auth_method_pass::Entity")]
-  UserAuthPass,
+  AuthMethodPass,
   #[sea_orm(has_many = "super::user_email::Entity")]
   UserEmail,
   #[sea_orm(has_many = "super::user_phone::Entity")]
   UserPhone,
 }
 
-// `Related` trait has to be implemented by hand
+impl Related<super::user_profile::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::UserProfile.def()
+  }
+}
+
+impl Related<super::auth_method_pass::Entity> for Entity {
+  fn to() -> RelationDef {
+    Relation::AuthMethodPass.def()
+  }
+}
+
 impl Related<super::user_email::Entity> for Entity {
   fn to() -> RelationDef {
     Relation::UserEmail.def()
@@ -59,21 +70,19 @@ impl Related<super::user_phone::Entity> for Entity {
 
 impl Related<super::group::Entity> for Entity {
   fn to() -> RelationDef {
-      super::users_groups_group_auth_roles::Relation::Group.def()
+    super::users_groups_group_access_roles::Relation::Group.def()
   }
-
   fn via() -> Option<RelationDef> {
-      Some(super::users_groups_group_auth_roles::Relation::User.def().rev())
+    Some(super::users_groups_group_access_roles::Relation::User.def().rev())
   }
 }
 
-impl Related<super::group_auth_role::Entity> for Entity {
+impl Related<super::group_access_role::Entity> for Entity {
   fn to() -> RelationDef {
-      super::users_groups_group_auth_roles::Relation::GroupAuthRole.def()
+    super::users_groups_group_access_roles::Relation::GroupAccessRole.def()
   }
-
   fn via() -> Option<RelationDef> {
-      Some(super::users_groups_group_auth_roles::Relation::User.def().rev())
+    Some(super::users_groups_group_access_roles::Relation::User.def().rev())
   }
 }
 
@@ -94,8 +103,8 @@ impl ActiveModelBehavior for ActiveModel {
   fn new() -> Self {
     Self {
       id: Set(Uuid::new_v4()),
-      created_at: Set(chrono::Utc::now()),
-      updated_at: Set(chrono::Utc::now()),
+      created_at: Set(Utc::now()),
+      updated_at: Set(Utc::now()),
       ..ActiveModelTrait::default()
     }
   }
@@ -106,7 +115,7 @@ impl ActiveModelBehavior for ActiveModel {
     C: ConnectionTrait,
   {
     if !insert {
-      self.updated_at = Set(chrono::Utc::now());
+      self.updated_at = Set(Utc::now());
       let locked_state = *self.locked_state.as_ref();
       // If invalid_login_attempts is changed and we are not permanently locked
       if self.invalid_login_attempts.is_set() && locked_state != LockedState::PermanentlyLocked {
